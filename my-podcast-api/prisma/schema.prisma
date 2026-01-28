@@ -1,0 +1,63 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider   = "prisma-client-js"
+  output     = "../generated/prisma"
+  engineType = "binary"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Podcast {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  rssUrl      String   @unique
+  imageUrl    String?
+  createdAt   DateTime @default(now())
+
+  episodes Episode[]
+}
+
+model Episode {
+  id        String  @id @default(uuid())
+  podcastId String
+  podcast   Podcast @relation(fields: [podcastId], references: [id])
+
+  title       String
+  description String
+  audioUrl    String   @unique
+  publishedAt DateTime
+  duration    Int
+
+  transcriptText String?
+  createdAt      DateTime       @default(now())
+  episodeTopics  EpisodeTopic[]
+}
+
+model Topic {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+
+  episodes EpisodeTopic[]
+}
+
+model EpisodeTopic {
+  id        String @id @default(uuid())
+  episodeId String
+  topicId   String
+
+  episode Episode @relation(fields: [episodeId], references: [id])
+  topic   Topic   @relation(fields: [topicId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@unique([episodeId, topicId])
+}
