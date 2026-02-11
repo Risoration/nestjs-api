@@ -1,8 +1,16 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { PodcastService } from './podcast.service';
 import { CreatePodcastDto } from './dto/podcast.dto';
 
-@Controller('podcast')
+@Controller('podcasts')
 export class PodcastController {
   constructor(private readonly podcastService: PodcastService) {}
 
@@ -12,12 +20,15 @@ export class PodcastController {
   }
 
   @Get()
-  async getPodcasts() {
+  async getPodcasts(@Query('id') id: string) {
+    if (id) {
+      return this.podcastService.findById(id);
+    }
     return this.podcastService.findAll();
   }
 
-  @Get(':id')
-  async getPodcastById(id: string) {
-    return this.podcastService.findById(id);
+  @Delete()
+  async deletePodcast(@Query('id') id: string) {
+    return this.podcastService.deletePodcast(id);
   }
 }

@@ -1,43 +1,46 @@
 import { Injectable } from '@nestjs/common';
-import { Topic } from './entity/topic.entity';
 import { CreateTopicDto, UpdateTopicDto } from './dto/topic.dto';
 import { randomUUID } from 'crypto';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class TopicsService {
-  private topics: Topic[] = [];
+  constructor(private readonly prisma: PrismaService) {}
 
   async findAll(sort: 'asc' | 'desc' = 'asc') {
-    const sortAsc = (a: Topic, b: Topic) => (a.name > b.name ? 1 : -1);
-    const sortDesc = (a: Topic, b: Topic) => (a.name < b.name ? 1 : -1);
-
-    return sort == 'asc'
-      ? this.topics.sort(sortAsc)
-      : this.topics.sort(sortDesc);
+    return this.prisma.topic.findMany({
+      orderBy: {
+        name: sort == 'asc' ? 'asc' : 'desc',
+      },
+    });
   }
 
   async findOne(id: string) {
-    return this.topics.find((topic) => topic.id === id);
+    return this.prisma.topic.findUnique({
+      where: { id },
+    });
   }
 
   async create(createTopicDto: CreateTopicDto) {
-    const newTopic = { ...createTopicDto, id: randomUUID() };
-    this.topics.push(newTopic);
-
-    return newTopic;
+    return this.prisma.topic.create({
+      data: {
+        name: createTopicDto.name,
+      },
+    });
   }
 
   async delete(id: string) {
-    this.topics = this.topics.filter((topic) => topic.id !== id);
+    return this.prisma.topic.delete({
+      where: { id },
+    });
   }
 
   async update(id: string, updateTopicDto: UpdateTopicDto) {
-    const topicIndex = this.topics.findIndex((topic) => topic.id === id);
-    const updatedTopic = {
-      ...this.topics[topicIndex],
-      ...updateTopicDto,
-    };
-    this.topics[topicIndex] = updatedTopic;
-    return updatedTopic;
+    return this.prisma.topic.update({
+      where: { id },
+      data: {
+        name: updateTopicDto.name,
+      },
+    });
   }
 }

@@ -1,18 +1,7 @@
-import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import * as path from 'node:path';
+import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { PrismaPg } from '@prisma/adapter-pg';
+import { PrismaClient } from '@prisma/client';
 import { Pool } from 'pg';
-
-const prismaClientPath = path.join(process.cwd(), 'generated', 'prisma', 'client.js');
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-type PrismaClientType = import('../../generated/prisma').PrismaClient;
-const { PrismaClient } = require(prismaClientPath) as {
-  PrismaClient: new (options: { adapter: PrismaPg }) => PrismaClientType;
-};
-
-const prismaPool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
 
 @Injectable()
 export class PrismaService
@@ -20,10 +9,16 @@ export class PrismaService
   implements OnModuleInit, OnModuleDestroy
 {
   constructor() {
-    const adapter = new PrismaPg(prismaPool);
+    const connectionString = process.env.DATABASE_URL;
+    if (!connectionString) {
+      throw new Error(
+        'DATABASE_URL environment variable is not set. Add it to your .env file.',
+      );
+    }
+    const pool = new Pool({ connectionString });
+    const adapter = new PrismaPg(pool);
     super({ adapter });
   }
-
   async onModuleInit() {
     await this.$connect();
   }

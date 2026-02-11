@@ -1,13 +1,28 @@
 import { Type } from 'class-transformer';
-import { IsBoolean, IsDate, IsOptional, IsString } from 'class-validator';
+import {
+  IsArray,
+  IsBoolean,
+  IsDate,
+  IsNumber,
+  IsOptional,
+  IsString,
+} from 'class-validator';
+import { EpisodeTopic } from '@prisma/client';
 
 export class CreateEpisodeDto {
   @IsString()
-  name: string;
-  @IsBoolean()
+  title: string;
+  @IsString()
+  description: string;
+  @IsString()
+  audioUrl: string;
+  @IsNumber()
+  duration: number;
+  @IsString()
+  podcastId: string;
+  @IsArray()
   @IsOptional()
-  featured?: boolean;
-
+  episodeTopics?: EpisodeTopic[];
   @IsDate()
   @Type(() => Date)
   publishedAt: Date;
@@ -16,8 +31,20 @@ export class CreateEpisodeDto {
 export class UpdateEpisodeDto {
   @IsString()
   @IsOptional()
-  name?: string;
-  @IsBoolean()
+  title?: string;
+  @IsString()
   @IsOptional()
-  featured?: boolean;
+  description?: string;
+  @IsString()
+  @IsOptional()
+  audioUrl?: string;
+  @IsNumber()
+  @IsOptional()
+  duration?: number;
+  @IsString()
+  @IsOptional()
+  podcastId?: string;
+  @IsArray()
+  @IsOptional()
+  episodeTopics?: EpisodeTopic[];
 }

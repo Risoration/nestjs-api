@@ -27,18 +27,13 @@ export class EpisodesController {
     private configService: ConfigService,
   ) {}
   @Get()
-  findAll(
+  findEpisodes(
     @Query('sort') sort: 'asc' | 'desc' = 'desc',
     @Query('limit', new DefaultValuePipe(100), ParseIntPipe, IsPositivePipe)
     limit?: number,
   ) {
     console.log(sort);
     return this.episodesService.findAll(sort);
-  }
-
-  @Get('featured')
-  findFeatured() {
-    return this.episodesService.findFeatured();
   }
 
   @Get(':id')

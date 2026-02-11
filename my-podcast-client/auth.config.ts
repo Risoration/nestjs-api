@@ -1,0 +1,21 @@
+import type { NextAuthConfig } from 'next-auth';
+
+export const authConfig = {
+  pages: {
+    signIn: '/login',
+  },
+  callbacks: {
+    authorized({ auth, request: { nextUrl } }) {
+      const isLoggedIn = !!auth?.user;
+      const isOnPodcasts = nextUrl.pathname.startsWith('/podcasts');
+      if (isOnPodcasts) {
+        if (isLoggedIn) return true;
+        return false; //redirect unauthenticated users
+      } else if (isLoggedIn) {
+        return Response.redirect(new URL('/podcasts', nextUrl));
+      }
+      return true;
+    },
+  },
+  providers: [], //satisfies nextauthconfig type
+} satisfies NextAuthConfig;

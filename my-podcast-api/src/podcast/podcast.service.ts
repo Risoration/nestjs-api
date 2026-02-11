@@ -7,7 +7,6 @@ import { RssService } from 'src/rss/rss.service';
 export class PodcastService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly episodesService: EpisodesService,
     private readonly rssService: RssService,
   ) {}
 
@@ -35,9 +34,13 @@ export class PodcastService {
       },
     });
 
-    // await this.episodesService.ingestFromFeed(newPodcast.id, feed);
-
     return newPodcast;
+  }
+
+  async deletePodcast(id: string) {
+    return this.prisma.podcast.delete({
+      where: { id },
+    });
   }
 
   async findAll() {

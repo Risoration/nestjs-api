@@ -1,7 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Episode } from './entity/episode.entity';
 import { CreateEpisodeDto, UpdateEpisodeDto } from './dto/episode.dto';
-import { randomUUID } from 'crypto';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
@@ -10,46 +8,50 @@ export class EpisodesService {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  private episodes: Episode[] = [];
-
   async findAll(sort: 'asc' | 'desc' = 'asc') {
-    const sortAsc = (a: Episode, b: Episode) => (a.name > b.name ? 1 : -1);
-    const sortDesc = (a: Episode, b: Episode) => (a.name < b.name ? 1 : -1);
-
-    return sort == 'asc'
-      ? this.episodes.sort(sortAsc)
-      : this.episodes.sort(sortDesc);
-  }
-
-  async findFeatured() {
-    return this.episodes.filter((episode) => episode.featured);
+    return this.prisma.episode.findMany({
+      orderBy: {
+        publishedAt: sort === 'asc' ? 'asc' : 'desc',
+      },
+    });
   }
 
   async findOne(id: string) {
-    return this.episodes.find((episode) => episode.id === id);
+    return this.prisma.episode.findUnique({
+      where: { id },
+    });
   }
 
   async create(createEpisodeDto: CreateEpisodeDto) {
-    const newEpisode = { ...createEpisodeDto, id: randomUUID() };
-    this.episodes.push(newEpisode);
-
-    return newEpisode;
+    return this.prisma.episode.create({
+      data: {
+        title: createEpisodeDto.title,
+        description: createEpisodeDto.description,
+        audioUrl: createEpisodeDto.audioUrl,
+        duration: createEpisodeDto.duration,
+        podcastId: createEpisodeDto.podcastId,
+        publishedAt: createEpisodeDto.publishedAt,
+      },
+    });
   }
 
   async delete(id: string) {
-    this.episodes = this.episodes.filter((episode) => episode.id !== id);
+    return this.prisma.episode.delete({
+      where: { id },
+    });
   }
 
   async update(id: string, updateEpisodeDto: UpdateEpisodeDto) {
-    const episodeIndex = this.episodes.findIndex(
-      (episode) => episode.id === id,
-    );
-    const updatedEpisode = {
-      ...this.episodes[episodeIndex],
-      ...updateEpisodeDto,
-    };
-    this.episodes[episodeIndex] = updatedEpisode;
-    return updatedEpisode;
+    return this.prisma.episode.update({
+      where: { id },
+      data: {
+        title: updateEpisodeDto.title,
+        description: updateEpisodeDto.description,
+        audioUrl: updateEpisodeDto.audioUrl,
+        duration: updateEpisodeDto.duration,
+        podcastId: updateEpisodeDto.podcastId,
+      },
+    });
   }
 
   parseDuration(duration: string): number {
@@ -71,6 +73,7 @@ export class EpisodesService {
     return parts[0];
   }
 
+  // TODO: this is not used anymore, but could be useful in the future
   async ingestFromFeed(podcastId: string, feed: any) {
     if (!feed?.items?.length) {
       this.logger.warn('RSS feed contains no items');
