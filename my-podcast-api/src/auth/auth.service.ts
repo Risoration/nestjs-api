@@ -28,7 +28,7 @@ export class AuthService {
     };
 
     return {
-      accessToken: this.jwtService.sign(payload),
+      accessToken: this.signToken(user.id, user.email),
       user: {
         id: user.id,
         email: user.email,
@@ -58,7 +58,21 @@ export class AuthService {
 
     const hashedPassword = await hash(dto.password, 10);
 
-    const user = await this.userService.create(dto);
+    const user = await this.userService.create({
+      ...dto,
+      password: hashedPassword,
+    });
+
+    const accessToken = this.signToken(user.id, user.email);
+
+    return {
+      accessToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+      },
+    };
   }
 
   private signToken(userId: string, email: string) {

@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { CreateEpisodeDto, UpdateEpisodeDto } from './dto/episode.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 
@@ -8,11 +8,12 @@ export class EpisodesService {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(sort: 'asc' | 'desc' = 'asc') {
+  async findAll(sort: 'asc' | 'desc' = 'asc', limit?: number) {
     return this.prisma.episode.findMany({
       orderBy: {
         publishedAt: sort === 'asc' ? 'asc' : 'desc',
       },
+      take: limit,
     });
   }
 
@@ -22,92 +23,58 @@ export class EpisodesService {
     });
   }
 
-  async create(createEpisodeDto: CreateEpisodeDto) {
+  async create(dto: CreateEpisodeDto) {
+    const existing = await this.prisma.episode.findUnique({
+      where: { audioUrl: dto.audioUrl },
+    });
+
+    if (existing) {
+      throw new NotFoundException(
+        `Episode with audio URL: ${dto.audioUrl} already exists`,
+      );
+    }
+
     return this.prisma.episode.create({
       data: {
-        title: createEpisodeDto.title,
-        description: createEpisodeDto.description,
-        audioUrl: createEpisodeDto.audioUrl,
-        duration: createEpisodeDto.duration,
-        podcastId: createEpisodeDto.podcastId,
-        publishedAt: createEpisodeDto.publishedAt,
+        ...dto,
+        episodeTopics: dto.episodeTopics
+          ? { create: dto.episodeTopics }
+          : undefined,
       },
     });
   }
 
   async delete(id: string) {
+    const episode = await this.prisma.episode.findUnique({
+      where: { id },
+    });
+
+    if (!episode) {
+      throw new NotFoundException(`Episode with ID: ${id} not found`);
+    }
+
     return this.prisma.episode.delete({
       where: { id },
     });
   }
 
-  async update(id: string, updateEpisodeDto: UpdateEpisodeDto) {
+  async update(id: string, dto: UpdateEpisodeDto) {
+    const episode = await this.prisma.episode.findUnique({
+      where: { id },
+    });
+
+    if (!episode) {
+      throw new NotFoundException(`Episode with ID: ${id} not found`);
+    }
+
     return this.prisma.episode.update({
       where: { id },
       data: {
-        title: updateEpisodeDto.title,
-        description: updateEpisodeDto.description,
-        audioUrl: updateEpisodeDto.audioUrl,
-        duration: updateEpisodeDto.duration,
-        podcastId: updateEpisodeDto.podcastId,
+        ...dto,
+        episodeTopics: dto.episodeTopics
+          ? { set: dto.episodeTopics }
+          : undefined,
       },
     });
-  }
-
-  parseDuration(duration: string): number {
-    if (!duration) return 0;
-
-    //handle formats "HH:MM:SS" or "MM:SS"
-    const parts = duration.split(':').map((part) => parseInt(part, 10));
-
-    if (parts.some(isNaN)) return 0;
-
-    if (parts.length === 3) {
-      return parts[0] * 3600 + parts[1] * 60 + parts[2];
-    }
-
-    if (parts.length === 2) {
-      return parts[0] * 60 + parts[1];
-    }
-
-    return parts[0];
-  }
-
-  // TODO: this is not used anymore, but could be useful in the future
-  async ingestFromFeed(podcastId: string, feed: any) {
-    if (!feed?.items?.length) {
-      this.logger.warn('RSS feed contains no items');
-      return;
-    }
-
-    for (const item of feed.items) {
-      const audioUrl = item.enclosure?.url;
-
-      if (!audioUrl) continue;
-
-      try {
-        await this.prisma.episode.upsert({
-          where: { audioUrl },
-          update: {
-            title: item.title ?? '',
-            description: item.contentSnippet ?? item.itunesSummary ?? '',
-            publishedAt: item.pubDate ? new Date(item.pubDate) : new Date(),
-            duration: this.parseDuration(item.itunesDuration),
-          },
-          create: {
-            audioUrl,
-            podcastId,
-            title: item.title ?? '',
-            description: item.contentSnippet ?? item.itunesSummary ?? '',
-            publishedAt: item.pubDate ? new Date(item.pubDate) : new Date(),
-            duration: this.parseDuration(item.itunesDuration),
-          },
-        });
-      } catch (error) {
-        this.logger.error(
-          `Failed to ingest episode from feed: ${error.message}`,
-        );
-      }
-    }
   }
 }

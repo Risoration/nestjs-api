@@ -1,7 +1,6 @@
 import { Type } from 'class-transformer';
 import {
   IsArray,
-  IsBoolean,
   IsDate,
   IsNumber,
   IsOptional,
@@ -26,6 +25,12 @@ export class CreateEpisodeDto {
   @IsDate()
   @Type(() => Date)
   publishedAt: Date;
+  @IsString()
+  @IsOptional()
+  transcriptText?: string;
+  @IsDate()
+  @Type(() => Date)
+  createdAt: Date;
 }
 
 export class UpdateEpisodeDto {
