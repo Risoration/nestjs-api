@@ -31,4 +31,9 @@ export class PodcastController {
   async deletePodcast(@Query('id') id: string) {
     return this.podcastService.deletePodcast(id);
   }
+
+  @Get('search')
+  async search(@Query('q') query: string) {
+    this.podcastService.searchExternal;
+  }
 }

@@ -1,8 +1,10 @@
 'use client';
 import { useEffect, useState } from 'react';
-import PodcastCard from './PodcastCard';
-import axios from 'axios';
-import AddPodcastButton from './AddPodcastButton';
+import PodcastCard from './components/PodcastCard';
+import AddPodcastButton from './components/AddPodcastButton';
+import { apiClient } from '../lib/axios';
+import { useRouter } from 'next/navigation';
+import { getCookie } from '../lib/cookie';
 
 export type Podcast = {
   id: string;
@@ -14,14 +16,22 @@ export type Podcast = {
 };
 
 async function fetchPodcasts() {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-  const response = await axios.get(`${apiUrl}/podcasts`);
+  const response = await apiClient.get(`/podcasts`);
 
   return response.data;
 }
 
 export default function Podcasts() {
   const [podcasts, setPodcasts] = useState<Podcast[]>([]);
+  const router = useRouter();
+
+  useEffect(() => {
+    const token = getCookie('accessToken');
+
+    if (!token) {
+      router.replace('/login');
+    }
+  }, []);
 
   async function loadPodcasts() {
     try {
@@ -37,14 +47,27 @@ export default function Podcasts() {
   }, []);
 
   return (
-    <main>
-      <AddPodcastButton onSuccess={loadPodcasts} />
-      {podcasts.map((podcast) => (
-        <div key={podcast.id}>
-          <PodcastCard podcast={podcast} onSuccess={loadPodcasts} />
-        </div>
-      ))}
-      ;
+    <main className='w-full'>
+      <div className='flex flex-row justify-between w-full items-center'>
+        <h1 className='flex justify-center'>Your Podcasts</h1>
+        <AddPodcastButton />
+      </div>
+      <div className='flex flex-row w-fit align-middle'>
+        {podcasts.length > 0 ? (
+          <div>
+            {podcasts.map((podcast) => (
+              <div key={podcast.id}>
+                <PodcastCard
+                  podcast={podcast}
+                  onSuccess={loadPodcasts}
+                />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div>No podcasts found</div>
+        )}
+      </div>
     </main>
   );
 }

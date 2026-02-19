@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Podcast } from './page';
+import { Podcast } from '../page';
 import axios, { AxiosError } from 'axios';
 import { toast } from 'react-toastify';
 import { useRouter } from 'next/navigation';

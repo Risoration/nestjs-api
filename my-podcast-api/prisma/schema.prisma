@@ -6,7 +6,7 @@
 
 generator client {
   provider = "prisma-client-js"
-  // use default output (node_modules/.prisma/client) so importing '@prisma/client' works
+  // generated client will be written to the repo folder `generated/prisma`
 }
 
 datasource db {
@@ -14,12 +14,13 @@ datasource db {
 }
 
 model Podcast {
-  id          String   @id @default(uuid())
-  title       String
-  description String?
-  rssUrl      String   @unique
-  imageUrl    String?
-  createdAt   DateTime @default(now())
+  id              String   @id @default(uuid())
+  listenNotesId   String   @unique
+  title           String
+  description     String?
+  imageUrl        String?
+  publisher       String?
+  createdAt       DateTime @default(now())
 
   //ownership
   user   User?   @relation(fields: [userId], references: [id])

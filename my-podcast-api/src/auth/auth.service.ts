@@ -1,6 +1,7 @@
 import {
   ConflictException,
   Injectable,
+  Post,
   UnauthorizedException,
 } from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
@@ -15,6 +16,7 @@ export class AuthService {
     private readonly userService: UserService,
     private readonly jwtService: JwtService,
   ) {}
+
   async login(dto: LoginDto) {
     const user = await this.validateUser(dto.email, dto.password);
 
@@ -28,25 +30,13 @@ export class AuthService {
     };
 
     return {
-      accessToken: this.signToken(user.id, user.email),
+      accessToken: this.signToken(payload.sub, payload.email),
       user: {
         id: user.id,
         email: user.email,
         name: user.name,
       },
     };
-  }
-
-  async validateUser(email: string, password: string) {
-    const user = await this.userService.findForAuthByEmail(email);
-
-    if (!user) return null;
-
-    const valid = await compare(password, user.password);
-
-    if (!valid) return null;
-
-    return user;
   }
 
   async register(dto: RegisterDto) {
@@ -73,6 +63,18 @@ export class AuthService {
         name: user.name,
       },
     };
+  }
+
+  async validateUser(email: string, password: string) {
+    const user = await this.userService.findForAuthByEmail(email);
+
+    if (!user) return null;
+
+    const valid = await compare(password, user.password);
+
+    if (!valid) return null;
+
+    return user;
   }
 
   private signToken(userId: string, email: string) {

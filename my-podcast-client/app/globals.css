@@ -23,7 +23,6 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  display: flex;
   justify-content: center;
   align-items: center;
 }
@@ -37,6 +36,7 @@ button {
   background-color: grey;
   border: grey;
   border-radius: 10px;
+  padding: 10px;
 }
 
 button:hover {
@@ -51,6 +51,11 @@ form {
   box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
   width: 320px;
   text-align: center;
+}
+
+h1 {
+  margin-bottom: 20px;
+  font-size: xx-large;
 }
 
 h2 {

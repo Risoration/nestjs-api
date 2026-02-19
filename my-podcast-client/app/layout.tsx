@@ -3,8 +3,9 @@ import { Geist, Geist_Mono, Roboto } from 'next/font/google';
 import './globals.css';
 import 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer } from 'react-toastify';
-import Navbar from './Navbar';
+import Navbar from './components/Navbar';
 import { inter, roboto } from '../app/ui/fonts';
+import { AuthProvider } from '@/context/AuthContext';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -29,11 +30,13 @@ export default function RootLayout({
   return (
     <html lang='en'>
       <body
-        className={`${inter.className} ${roboto.className} antialiased min-h-screen flex flex-col`}
+        className={`${inter.className} ${roboto.className} antialiased w-full p-5 m-2'`}
       >
-        <Navbar />
-        <main className='flex-1'>{children}</main>
-        <ToastContainer position='top-right' autoClose={3000} pauseOnHover />
+        <AuthProvider>
+          <ToastContainer />
+          <Navbar />
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );
