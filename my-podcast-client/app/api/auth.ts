@@ -9,7 +9,7 @@ export interface RegisterDto {
 
 export const registerUser = async (data: RegisterDto) => {
   const response = await apiClient.post('/auth/register', data);
-
+  setCookie('accessToken', response.data.accessToken, 30);
   return response.data;
 };
 
@@ -22,6 +22,10 @@ export const loginUser = async (data: { email: string; password: string }) => {
 
 export const getMe = async () => {
   const response = await apiClient.get('/users/me');
+  return response.data;
+};
 
+export const updateProfile = async (data: { name?: string }) => {
+  const response = await apiClient.patch('/users/me', data);
   return response.data;
 };

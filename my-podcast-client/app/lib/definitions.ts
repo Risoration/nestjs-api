@@ -1,4 +1,3 @@
-import { error } from 'console';
 import * as z from 'zod';
 
 export const SignupFormSchema = z.object({

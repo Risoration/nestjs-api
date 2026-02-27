@@ -1,20 +1,21 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
+import Button from '../ui/button';
 
 export default function SignOutButton() {
   const router = useRouter();
+  const { logout } = useAuth() ?? {};
 
-  async function signOut() {
-    document.cookie = '';
+  function handleSignOut() {
+    logout?.();
     router.push('/login');
   }
+
   return (
-    <button
-      onClick={signOut}
-      className='text-nowrap w-[7.5vw]'
-    >
+    <Button onClick={handleSignOut} variant="secondary" className="text-nowrap">
       Log Out
-    </button>
+    </Button>
   );
 }

@@ -14,7 +14,7 @@ import {
   UseGuards,
   ValidationPipe,
 } from '@nestjs/common';
-import { EpisodesService } from './episode.service';
+import { EpisodesService } from './episodes.service';
 import { CreateEpisodeDto, UpdateEpisodeDto } from './dto/episode.dto';
 import { ConfigService } from '../config/config.service';
 import { IsPositivePipe } from '../pipes/is-positive/is-positive.pipe';

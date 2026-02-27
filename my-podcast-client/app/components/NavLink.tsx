@@ -11,11 +11,9 @@ export default function NavLink({ href, children }: NavLinkProps) {
     <Link
       href={href}
       className='
-        flex-1
-        flex items-center justify-center
-        text-md font-medium
-        transition-colors
-        hover:bg-gray-700
+        flex-1 flex items-center justify-center
+        text-md font-medium text-zinc-300
+        transition-colors hover:bg-teal-500/10 hover:text-teal-400
         rounded-2xl
       '
     >

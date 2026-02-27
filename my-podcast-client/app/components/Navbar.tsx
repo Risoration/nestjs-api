@@ -10,20 +10,21 @@ export default function Navbar() {
   const user = authContext?.user;
   const loading = authContext?.loading;
 
-  if (loading) return null;
   return (
-    <nav className='flex flex-row justify-between items-center'>
+    <nav className='flex flex-row justify-between items-center py-4 border-b border-teal-500/20'>
       <Link
-        className='text-2xl'
-        href={'/'}
+        className='text-2xl font-semibold text-zinc-100 hover:text-teal-400 transition-colors'
+        href='/'
       >
         MapMyPodcast
       </Link>
 
-      {user ? (
+      {loading ? (
+        <div className='flex flex-row gap-4 text-zinc-500'>Loading...</div>
+      ) : user ? (
         <>
           <div
-            className={`flex flex-row border-2 rounded-2xl justify-center w-[50vw] h-10 ${inter.className}`}
+            className={`flex flex-row border border-teal-500/20 rounded-2xl justify-center w-[50vw] h-10 bg-zinc-800/60 ${inter.className}`}
           >
             <NavLink href='/podcasts'>My Podcasts</NavLink>
             <NavLink href='/profile'>My Profile</NavLink>
@@ -31,10 +32,20 @@ export default function Navbar() {
           <SignOutButton />
         </>
       ) : (
-        <>
-          <a href='/login'>Login</a>
-          <a href='/register'>Register</a>
-        </>
+        <div className='flex flex-row gap-2'>
+          <Link
+            href='/login'
+            className='px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-lg transition-colors'
+          >
+            Login
+          </Link>
+          <Link
+            href='/register'
+            className='px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg transition-colors'
+          >
+            Register
+          </Link>
+        </div>
       )}
     </nav>
   );

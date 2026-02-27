@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { EpisodesController } from './episode.controller';
-import { EpisodesService } from './episode.service';
+import { EpisodesController } from './episodes.controller';
+import { EpisodesService } from './episodes.service';
 import { NotFoundException } from '@nestjs/common';
 
 describe('EpisodesController', () => {

@@ -1,85 +1,104 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
 import { inter } from '../../ui/fonts';
-import { useActionState, useState } from 'react';
-import { authenticate } from '@/app/lib/actions';
+import React, { useState } from 'react';
 import Link from 'next/link';
-import { buttonClasses, inputClasses } from '@/app/styles';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 import { registerUser } from '../../api/auth';
+import Input from '@/app/ui/input';
+import Button from '@/app/ui/button';
 
 export default function RegisterForm() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get('callbackUrl') || '/podcasts';
-  const [state, action, pending] = useActionState(authenticate, undefined);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
   });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+  const { setUserFromLogin } = useAuth() ?? {};
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+    setIsLoading(true);
 
     try {
-      console.log(formData);
-      const user = await registerUser(formData);
-      console.log('Registration successful:', user);
-      router.push('/login');
-    } catch (error: any) {
-      console.log('ERROR:', error);
-      console.log('RESPONSE:', error?.response);
+      const { user } = await registerUser(formData);
+      if (user) {
+        setUserFromLogin?.(user);
+      }
+      router.push('/podcasts');
+    } catch (err: unknown) {
+      const message =
+        err && typeof err === 'object' && 'response' in err
+          ? (err as { response?: { data?: { message?: string } } }).response
+              ?.data?.message
+          : null;
+      setError(message || 'Registration failed');
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  const inputClasses =
+    'relative py-4 mb-2 focus:shadow-teal-500/40 focus:shadow-lg focus:outline-none border-b-2 bg-transparent text-white border-teal-500/30 placeholder-zinc-500 focus:border-teal-400 transition-colors';
+
+  const linkClasses =
+    'text-sm py-1 px-3 bg-violet-600 rounded-md hover:bg-violet-500 text-white transition-colors';
+
   return (
     <form
-      className='flex flex-col m-2 h-fit bg-gray-700 rounded-2xl p-10 border-2 shadow-2xl shadow-teal-500/70'
-      action={action}
+      className='flex flex-col m-2 h-fit bg-zinc-800/80 rounded-2xl p-10 border border-teal-500/20 shadow-2xl shadow-teal-500/20'
+      onSubmit={handleSubmit}
     >
       <h2 className={`${inter.className} mb-3 text-2xl`}>Sign Up</h2>
+      {error && (
+        <p className='mb-3 text-sm text-red-400' role='alert'>
+          {error}
+        </p>
+      )}
       <div className='flex flex-col'>
         <div className='flex flex-col h-2/3 mb-4'>
-          <input
+          <Input
             type='text'
             placeholder='Name'
-            className={inputClasses}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          />
-          <input
-            type='text'
-            placeholder='Email'
-            className={inputClasses}
+            value={formData.name}
             onChange={(e) =>
-              setFormData({ ...formData, email: e.target.value })
+              setFormData((prev) => ({ ...prev, name: e.target.value }))
             }
+            className={inputClasses}
           />
-          <input
+          <Input
+            type='email'
+            placeholder='Email'
+            value={formData.email}
+            onChange={(e) =>
+              setFormData((prev) => ({ ...prev, email: e.target.value }))
+            }
+            className={inputClasses}
+          />
+          <Input
             type='password'
             placeholder='Password'
+            value={formData.password}
+            onChange={(e) =>
+              setFormData((prev) => ({ ...prev, password: e.target.value }))
+            }
             className={inputClasses}
-            onChange={(e) => {
-              setFormData({ ...formData, password: e.target.value });
-            }}
           />
         </div>
         <div className='flex flex-col h-2/3 mb-4 gap-5'>
-          <button
-            type='submit'
-            className={buttonClasses}
-            onClick={handleSubmit}
-          >
+          <Button type='submit' isLoading={isLoading}>
             Sign Up
-          </button>
+          </Button>
           <span className='flex flex-row justify-between items-center'>
-            <p className='text-xs text-gray-300 text-left'>
+            <p className='text-xs text-zinc-400 text-left'>
               Already have an account?
             </p>
-            <Link
-              href={'/login'}
-              className={buttonClasses + ' text-sm py-1 px-3 bg-violet-800'}
-            >
+            <Link href='/login' className={linkClasses}>
               Log In
             </Link>
           </span>

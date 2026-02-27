@@ -34,8 +34,9 @@ export class UserController {
     return this.userService.findPublicById(id);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Patch('me')
-  updateMe(@Body() dto: UpdateUserDto) {
-    throw new Error('Auth not wired yet');
+  updateMe(@CurrentUser() user: JwtUser, @Body() dto: UpdateUserDto) {
+    return this.userService.updateProfile(user.id, dto);
   }
 }

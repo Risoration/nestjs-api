@@ -9,6 +9,7 @@ export class UserService {
     email: true,
     name: true,
     createdAt: true,
+    updatedAt: true,
   };
   constructor(private readonly prisma: PrismaService) {}
   create(user: { name: string; email: string; password: string }) {
@@ -53,6 +54,7 @@ export class UserService {
       data: {
         ...(dto.name && { name: dto.name }),
       },
+      select: this.publicSelect,
     });
   }
 

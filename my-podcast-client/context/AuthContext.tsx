@@ -1,17 +1,30 @@
 'use client';
+
 import { getMe } from '@/app/api/auth';
-import { apiClient } from '@/app/lib/axios';
+import { clearCookie } from '@/app/lib/cookie';
 import {
   createContext,
   ReactNode,
+  useCallback,
   useContext,
   useEffect,
   useState,
 } from 'react';
 
+export type User = {
+  id: string;
+  email: string;
+  name: string;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
 type AuthContextType = {
-  user: string | null;
+  user: User | null;
   loading: boolean;
+  logout: () => void;
+  refreshUser: () => Promise<void>;
+  setUserFromLogin: (user: Pick<User, 'id' | 'email' | 'name'>) => void;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -21,34 +34,63 @@ type AuthProviderProps = {
 };
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    getMe()
-      .then((data) => setUser(data))
-      .catch((error) => {
-        console.log(error);
-        setUser(null);
-      })
-      .finally(() => setLoading(false));
+  const refreshUser = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await getMe();
+      setUser(data);
+    } catch {
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  // useEffect(() => {
-  //   fetch('/auth/me', {
-  //     credentials: 'include',
-  //   })
-  //     .then((res) => {
-  //       if (!res.ok) throw new Error();
-  //       return res.json();
-  //     })
-  //     .then((data) => setUser(data))
-  //     .catch(() => setUser(null))
-  //     .finally(() => setLoading(false));
-  // }, []);
+  const logout = useCallback(() => {
+    clearCookie('accessToken');
+    setUser(null);
+  }, []);
+
+  const setUserFromLogin = useCallback(
+    (user: Pick<User, 'id' | 'email' | 'name'>) => {
+      setUser(user);
+    },
+    [],
+  );
+
+  useEffect(() => {
+    refreshUser();
+  }, [refreshUser]);
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refreshUser();
+      }
+    };
+
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        refreshUser();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('pageshow', handlePageShow);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('pageshow', handlePageShow);
+    };
+  }, [refreshUser]);
 
   return (
-    <AuthContext.Provider value={{ user, loading }}>
+    <AuthContext.Provider
+      value={{ user, loading, logout, refreshUser, setUserFromLogin }}
+    >
       {children}
     </AuthContext.Provider>
   );

@@ -30,10 +30,10 @@ export default function RootLayout({
   return (
     <html lang='en'>
       <body
-        className={`${inter.className} ${roboto.className} antialiased w-full p-5 m-2'`}
+        className={`${inter.className} ${roboto.className} antialiased w-full p-5 m-2 bg-[#0c0c0f] text-zinc-100`}
       >
         <AuthProvider>
-          <ToastContainer />
+          <ToastContainer theme='dark' />
           <Navbar />
           {children}
         </AuthProvider>
