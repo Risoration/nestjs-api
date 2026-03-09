@@ -27,9 +27,21 @@ export class PodcastController {
     return this.podcastService.searchExternal(query);
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get('favourites')
+  async getFavourites(@CurrentUser() user: JwtUser) {
+    return this.podcastService.getUserFavouriteGenres(user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('recommendations')
+  async getRecommendations(@CurrentUser() user: JwtUser) {
+    return this.podcastService.getRecommendationsForUser(user.id);
+  }
+
   @Get(':id')
   async getPodcastDetail(@Param('id') id: string) {
-    return this.podcastService.getPodcastWithTopics(id);
+    return this.podcastService.getPodcastDetail(id);
   }
 
   @UseGuards(JwtAuthGuard)

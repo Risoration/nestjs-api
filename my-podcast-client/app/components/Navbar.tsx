@@ -27,6 +27,7 @@ export default function Navbar() {
             className={`flex flex-row border border-teal-500/20 rounded-2xl justify-center w-[50vw] h-10 bg-zinc-800/60 ${inter.className}`}
           >
             <NavLink href='/podcasts'>My Podcasts</NavLink>
+            <NavLink href='/explore'>Explore</NavLink>
             <NavLink href='/profile'>My Profile</NavLink>
           </div>
           <SignOutButton />

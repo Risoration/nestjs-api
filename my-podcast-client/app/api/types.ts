@@ -1,3 +1,9 @@
+export type FavouriteCategory = {
+  id: number;
+  name: string;
+  count: number;
+};
+
 export type SearchResult = {
   listenNotesId: string;
   title: string;

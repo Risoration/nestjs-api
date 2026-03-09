@@ -4,7 +4,7 @@ import './globals.css';
 import 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer } from 'react-toastify';
 import Navbar from './components/Navbar';
-import { inter, roboto } from '../app/ui/fonts';
+import { inter, roboto } from '@/app/ui/fonts';
 import { AuthProvider } from '@/context/AuthContext';
 
 const geistSans = Geist({

@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Client } from 'podcast-api';
 import axios from 'axios';
@@ -114,50 +118,55 @@ export class PodcastService {
     return map;
   }
 
-  async getPodcastWithTopics(id: string) {
-    const podcast = await this.findById(id);
-
+  private async fetchListenNotesPodcastData(listenNotesId: string) {
     const response = await axios.get(
-      `${this.baseUrl}/podcasts/${podcast.listenNotesId}`,
+      `${this.baseUrl}/podcasts/${listenNotesId}`,
       { headers: this.headers },
     );
+    return response.data;
+  }
 
-    const data = response.data;
-    const genreIds: number[] = data.genre_ids ?? [];
+  private async buildTopicsFromGenreIds(
+    genreIds: number[],
+  ): Promise<{ id: string; name: string }[]> {
     const genreMap = await this.getGenreMap();
-
-    const topics = genreIds
+    return genreIds
       .map((genreId: number) => {
         const name = genreMap.get(Number(genreId));
         return name ? { id: String(genreId), name } : null;
       })
-      .filter(Boolean) as { id: string; name: string }[];
+      .filter((x): x is { id: string; name: string } => x !== null);
+  }
 
-    const lnEpisodes = data.episodes ?? [];
-    const episodes = lnEpisodes.map(
-      (ep: {
-        id?: string;
-        title?: string;
-        audio?: string;
-        description?: string;
-        pub_date_ms?: number;
-        audio_length_sec?: number;
-      }) => {
-        return {
-          id: ep.id ?? '',
-          title: ep.title ?? '',
-          description: ep.description ?? '',
-          audioUrl: ep.audio ?? '',
-          publishedAt: ep.pub_date_ms
-            ? new Date(ep.pub_date_ms).toISOString()
-            : '',
-          duration: ep.audio_length_sec ?? 0,
-          transcriptText: undefined,
-          episodeTopics: [],
-        };
-      },
-    );
+  private buildEpisodesFromLnData(
+    lnEpisodes: {
+      id?: string;
+      title?: string;
+      audio?: string;
+      description?: string;
+      pub_date_ms?: number;
+      audio_length_sec?: number;
+    }[],
+  ) {
+    return (lnEpisodes ?? []).map((ep) => ({
+      id: ep.id ?? '',
+      title: ep.title ?? '',
+      description: ep.description ?? '',
+      audioUrl: ep.audio ?? '',
+      publishedAt: ep.pub_date_ms
+        ? new Date(ep.pub_date_ms).toISOString()
+        : '',
+      duration: ep.audio_length_sec ?? 0,
+      transcriptText: undefined as string | undefined,
+      episodeTopics: [] as { id: string; name: string }[],
+    }));
+  }
 
+  async getPodcastWithTopics(id: string) {
+    const podcast = await this.findById(id);
+    const data = await this.fetchListenNotesPodcastData(podcast.listenNotesId);
+    const topics = await this.buildTopicsFromGenreIds(data.genre_ids ?? []);
+    const episodes = this.buildEpisodesFromLnData(data.episodes ?? []);
     return {
       ...podcast,
       title: data.title ?? podcast.title,
@@ -167,5 +176,129 @@ export class PodcastService {
       topics,
       episodes,
     };
+  }
+
+  /** Resolve podcast detail by internal id or listenNotesId; supports recommendations not yet in DB. */
+  async getPodcastDetail(idOrListenNotesId: string) {
+    try {
+      const byId = await this.findById(idOrListenNotesId);
+      return this.getPodcastWithTopics(byId.id);
+    } catch {
+      const byListenNotesId = await this.findByListenNotesId(idOrListenNotesId);
+      if (byListenNotesId) {
+        return this.getPodcastWithTopics(byListenNotesId.id);
+      }
+      return this.getPodcastWithTopicsByListenNotesId(idOrListenNotesId);
+    }
+  }
+
+  private async getPodcastWithTopicsByListenNotesId(listenNotesId: string) {
+    const data = await this.fetchListenNotesPodcastData(listenNotesId);
+    const topics = await this.buildTopicsFromGenreIds(data.genre_ids ?? []);
+    const episodes = this.buildEpisodesFromLnData(data.episodes ?? []);
+    return {
+      id: listenNotesId,
+      listenNotesId,
+      title: data.title ?? '',
+      description: data.description ?? '',
+      imageUrl: data.image ?? null,
+      publisher: data.publisher ?? null,
+      createdAt: new Date(),
+      topics,
+      episodes,
+    };
+  }
+
+  async getUserFavouriteGenres(
+    userId: string,
+    limit = 5,
+  ): Promise<{ id: number; name: string; count: number }[]> {
+    const podcasts = await this.prisma.podcast.findMany({
+      where: { userId },
+      select: { listenNotesId: true },
+    });
+
+    if (!podcasts.length) {
+      return [];
+    }
+
+    const genreCounts = new Map<number, number>();
+
+    for (const p of podcasts) {
+      try {
+        const response = await axios.get(
+          `${this.baseUrl}/podcasts/${p.listenNotesId}`,
+          { headers: this.headers },
+        );
+        const genreIds: number[] = response.data.genre_ids ?? [];
+        for (const id of genreIds) {
+          genreCounts.set(id, (genreCounts.get(id) ?? 0) + 1);
+        }
+      } catch {
+        // skip single podcast fetch failure; continue with others
+      }
+    }
+
+    const sorted = [...genreCounts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, limit);
+
+    const genreMap = await this.getGenreMap();
+
+    return sorted
+      .map(([id, count]) => {
+        const name = genreMap.get(id);
+        if (!name) return null;
+        return { id, name, count };
+      })
+      .filter(
+        (x): x is { id: number; name: string; count: number } => x !== null,
+      );
+  }
+
+  async getRecommendationsForUser(userId: string): Promise<
+    {
+      listenNotesId: string;
+      title: string;
+      description: string;
+      image: string;
+    }[]
+  > {
+    const favourites = await this.getUserFavouriteGenres(userId);
+    if (!favourites.length) {
+      return [];
+    }
+
+    const genreIdsParam = favourites.map((f) => f.id).join(',');
+    const userPodcasts = await this.prisma.podcast.findMany({
+      where: { userId },
+      select: { listenNotesId: true },
+    });
+    const ownedIds = new Set(userPodcasts.map((p) => p.listenNotesId));
+
+    try {
+      const response = await axios.get(`${this.baseUrl}/search`, {
+        headers: this.headers,
+        params: {
+          q: favourites.map((f) => f.name).join(',  '),
+          type: 'podcast',
+          genre_ids: genreIdsParam,
+        },
+      });
+
+      const results = response.data?.results ?? [];
+      return results
+        .filter((podcast: { id: string }) => !ownedIds.has(podcast.id))
+        .map((podcast: any) => ({
+          listenNotesId: podcast.id,
+          title: podcast.title_original ?? '',
+          description: podcast.description_original ?? '',
+          image: podcast.image ?? '',
+        }));
+    } catch {
+      throw new ServiceUnavailableException(
+        'Unable to fetch recommendations. Please try again later.',
+      );
+    }
   }
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import Button from '../ui/button';
 
 export default function SignOutButton() {
@@ -14,7 +14,7 @@ export default function SignOutButton() {
   }
 
   return (
-    <Button onClick={handleSignOut} variant="secondary" className="text-nowrap">
+    <Button onClick={handleSignOut} variant='secondary' className='text-nowrap'>
       Log Out
     </Button>
   );

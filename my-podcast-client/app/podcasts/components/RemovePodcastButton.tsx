@@ -64,7 +64,7 @@ export default function RemovePodcastButton({
 
   return (
     <button
-      className='cursor-pointer hover:bg-red-600 p-2 mt-2 rounded-lg bg-red-500/80 text-white transition-colors'
+      className='cursor-pointer hover:bg-red-600 p-2 mt-2 rounded-md bg-red-500/80 text-white transition-colors'
       onClick={removePodcast}
     >
       Remove Podcast

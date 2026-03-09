@@ -3,9 +3,12 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { searchPodcasts, addPodcast, type SearchResult } from '@/app/api/podcasts';
+import { searchPodcasts, addPodcast } from '@/app/api/podcasts';
+import { SearchResult } from '@/app/api/types';
 import { toast } from 'react-toastify';
+import Input from '@/app/ui/input';
 
+// how long to wait after user stops typing
 const DEBOUNCE_MS = 300;
 
 export default function NewPodcastPage() {
@@ -61,27 +64,21 @@ export default function NewPodcastPage() {
     }
   };
 
-  const inputClasses =
-    'w-full py-3 px-4 bg-zinc-800/80 border border-teal-500/20 rounded-lg text-zinc-100 placeholder-zinc-500 focus:border-teal-400 focus:outline-none focus:ring-1 focus:ring-teal-500/50 transition-colors';
-
   return (
     <main className='p-10'>
       <h1 className='text-2xl mb-6 text-zinc-100'>Add New Podcast</h1>
 
       <div className='max-w-2xl space-y-6'>
-        <div>
-          <input
+        <div className='mb-4'>
+          <Input
             type='text'
             placeholder='Search for a podcast by name...'
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className={inputClasses}
           />
         </div>
 
-        {searchLoading && (
-          <div className='text-zinc-400'>Searching...</div>
-        )}
+        {searchLoading && <div className='text-zinc-400'>Searching...</div>}
 
         {!searchLoading && query.trim() && results.length === 0 && (
           <div className='text-zinc-400'>

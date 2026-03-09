@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "seo-aeo-geo-optimizer": {
+      "source": "kxwu222/SEO-AEO-GEO-Assistant",
+      "sourceType": "github",
+      "computedHash": "6718fb0d42f5bbcf1b1b7811b0f7140ed16ed733a765e685d53d89312d4074f2"
+    }
+  }
+}

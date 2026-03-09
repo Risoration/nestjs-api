@@ -22,13 +22,10 @@ export default function PodcastCard({ podcast, onSuccess }: PodcastCardProps) {
       </div>
       <h3 className='mt-2 text-zinc-400'>{podcast.description}</h3>
       <div className='flex flex-row justify-between items-center'>
-        <RemovePodcastButton
-          podcast={podcast}
-          onSuccess={onSuccess}
-        />
+        <RemovePodcastButton podcast={podcast} onSuccess={onSuccess} />
         <Link
           href={`/podcasts/${podcast.id}`}
-          className='bg-teal-600 hover:bg-teal-500 rounded-2xl p-2'
+          className='bg-teal-600 hover:bg-teal-500 rounded-md p-2'
         >
           See More
         </Link>

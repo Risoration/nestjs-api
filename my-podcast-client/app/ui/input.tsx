@@ -13,7 +13,7 @@ export default function Input({
   value,
   onChange,
   name,
-  className = 'relative py-4 mb-2 focus:shadow-teal-500/40 focus:shadow-lg focus:outline-none border-b-2 border-teal-500/30 focus:border-teal-400 transition-colors',
+  className =  'w-full p-4 bg-zinc-800/80 border border-teal-500/20 rounded-lg text-zinc-100 placeholder-zinc-500 focus:border-teal-400 focus:outline-none focus:ring-1 focus:ring-teal-500/50 transition-colors',
 }: InputProps) {
   return (
     <input
